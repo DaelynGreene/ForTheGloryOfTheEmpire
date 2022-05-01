@@ -71,6 +71,10 @@ credit_best <- train %>%
     Linear = TSLM(credit_in_millions ~ trend())
   )
 
+credit_best %>% forecast(holdout) %>%
+  autoplot(train) +
+  labs(y = "% of GDP", title = "Credit in Millions Prediction")
+
 report(credit_best)
 
 credit_best %>% gg_tsresiduals()
