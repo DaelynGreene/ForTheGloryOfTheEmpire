@@ -99,12 +99,20 @@ mape <- function(y_actual, y_pred) {
 rmse(holdout$credit_in_millions, pred$.mean)
 mape(holdout$credit_in_millions, pred$.mean)
 
+credit_best2 <- CREDIT_TS %>%
+  model(
+    #stepwise = ARIMA(credit_in_millions)
+    #ETS = ETS(credit_in_millions)
+    Linear = TSLM(credit_in_millions ~ trend())
+  )
 
-predictions <- credit_best %>%
+predictions <- credit_best2 %>%
   forecast(h = 96)
 
 predictions <- subset(predictions, Month > yearmonth("2011 Jan"))
 predictions <- predictions[,c(-1,-3)]
 names(predictions)[2] <- "Credit in Millions"
+
+predictions
 
 write.csv(predictions,file="predictions.csv",row.names = FALSE)
