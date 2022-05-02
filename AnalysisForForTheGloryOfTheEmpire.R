@@ -34,10 +34,10 @@ gg_season(CREDIT_TS)
 
 
 train <- CREDIT_TS %>% 
-  filter(Month <= yearmonth("2004 Jan"))
+  filter(Month <= yearmonth("2010 Jan"))
 
 holdout <- CREDIT_TS %>% 
-  filter(Month > yearmonth("2004 Jan"))
+  filter(Month > yearmonth("2010 Jan"))
 
 cluster <- makeCluster(detectCores() - 1) #Line 1 for parallelization
 registerDoParallel(cluster)
@@ -60,7 +60,7 @@ stopCluster(cluster) #Line 3 for parallelization
 registerDoSEQ()
 
 Model %>% 
-  forecast(h = 6) %>% 
+  forecast(h = 12) %>% 
   accuracy(train) %>% 
   arrange(RMSE)
 
@@ -68,6 +68,8 @@ credit_best <- train %>%
   model(
     #stepwise = ARIMA(credit_in_millions)
     #ETS = ETS(credit_in_millions)
+    #search = ARIMA(credit_in_millions, stepwise=FALSE)
+    #neural = NNETAR(credit_in_millions)
     Linear = TSLM(credit_in_millions ~ trend())
   )
 
@@ -81,12 +83,12 @@ credit_best %>% gg_tsresiduals()
 
 
 credit_best %>%
-  forecast(h = 84) %>%
+  forecast(h = 12) %>%
   autoplot(holdout) +
   labs(y = "Credits", title = "Imperial Revenue")
 
 pred <- credit_best %>%
-  forecast(h = 84)
+  forecast(h = 12)
 
 rmse <- function(y_actual, y_pred) {
   sqrt(mean((y_actual - y_pred)^2))
@@ -103,11 +105,12 @@ credit_best2 <- CREDIT_TS %>%
   model(
     #stepwise = ARIMA(credit_in_millions)
     #ETS = ETS(credit_in_millions)
-    Linear = TSLM(credit_in_millions ~ trend())
+    neural = NNETAR(credit_in_millions)
+    #Linear = TSLM(credit_in_millions ~ trend())
   )
 
 predictions <- credit_best2 %>%
-  forecast(h = 96)
+  forecast(h = 12)
 
 predictions <- subset(predictions, Month > yearmonth("2011 Jan"))
 predictions <- predictions[,c(-1,-3)]
