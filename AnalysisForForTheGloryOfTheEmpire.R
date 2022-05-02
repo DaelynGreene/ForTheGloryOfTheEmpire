@@ -45,23 +45,40 @@ registerDoParallel(cluster)
 Model <- train %>% 
   stretch_tsibble(.init = 48, .step = 24) %>% 
   model(
-    Naive = NAIVE(credit_in_millions),
-    Drift = RW(credit_in_millions ~ drift()),
-    arima012011 = ARIMA(credit_in_millions ~ pdq(0,1,2) + PDQ(0,1,1)),
-    arima210011 = ARIMA(credit_in_millions ~ pdq(2,1,0) + PDQ(0,1,1)),
+    #Naive = NAIVE(credit_in_millions),
+    #S_NAIVE = SNAIVE(credit_in_millions),
+    #Drift = RW(credit_in_millions ~ drift()),
+    Linear = TSLM(credit_in_millions ~ trend()),
+    #arima012011 = ARIMA(credit_in_millions ~ pdq(0,1,2) + PDQ(0,1,1)),
+    #arima210011 = ARIMA(credit_in_millions ~ pdq(2,1,0) + PDQ(0,1,1)),
     stepwise = ARIMA(credit_in_millions),
-    ETS = ETS(credit_in_millions),
-    search = ARIMA(credit_in_millions, stepwise=FALSE),
-    Linear = TSLM(credit_in_millions ~ trend())
+    #ETS = ETS(credit_in_millions),
+    #search = ARIMA(credit_in_millions, stepwise=FALSE),
+    #arima210 = ARIMA(credit_in_millions ~ pdq(2,1,0)),
+    #arima013 = ARIMA(credit_in_millions ~ pdq(0,1,3)),
+    #arima301012 = ARIMA(credit_in_millions ~ pdq(3,0,1) + PDQ(0,1,2)),
+    #arima301111 = ARIMA(credit_in_millions ~ pdq(3,0,1) + PDQ(1,1,1)),
+    arima301110 = ARIMA(credit_in_millions ~ pdq(3,0,1) + PDQ(1,1,0)),
     #Neural = NNETAR(credit_in_millions)
+    `K = 1` = ARIMA((credit_in_millions) ~ fourier(K=1) + PDQ(0,0,0)),
+    `K = 2` = ARIMA((credit_in_millions) ~ fourier(K=2) + PDQ(0,0,0)),
+    `K = 3` = ARIMA((credit_in_millions) ~ fourier(K=3) + PDQ(0,0,0)),
+    #`K = 4` = ARIMA((credit_in_millions) ~ fourier(K=4) + PDQ(0,0,0)),
+    `K = 5` = ARIMA((credit_in_millions) ~ fourier(K=5) + PDQ(0,0,0)),
+    `K = 6` = ARIMA((credit_in_millions) ~ fourier(K=6) + PDQ(0,0,0))
   )
 
 stopCluster(cluster) #Line 3 for parallelization
 registerDoSEQ()
 
-Model %>% 
+Model %>% #accuracy against the training data
   forecast(h = 12) %>% 
-  accuracy(train) %>% 
+  accuracy(training) %>% 
+  arrange(RMSE)
+
+Model %>% #accuracy against the holdout data
+  forecast(h = 12) %>% 
+  accuracy(holdout) %>% 
   arrange(RMSE)
 
 credit_best <- train %>%
@@ -71,6 +88,8 @@ credit_best <- train %>%
     #search = ARIMA(credit_in_millions, stepwise=FALSE)
     #neural = NNETAR(credit_in_millions)
     Linear = TSLM(credit_in_millions ~ trend())
+    #`K = 4` = ARIMA((credit_in_millions) ~ fourier(K=4) + PDQ(0,0,0))
+    #`K = 5` = ARIMA((credit_in_millions) ~ fourier(K=5) + PDQ(0,0,0))
   )
 
 credit_best %>% forecast(holdout) %>%
@@ -105,8 +124,8 @@ credit_best2 <- CREDIT_TS %>%
   model(
     #stepwise = ARIMA(credit_in_millions)
     #ETS = ETS(credit_in_millions)
-    neural = NNETAR(credit_in_millions)
-    #Linear = TSLM(credit_in_millions ~ trend())
+    #neural = NNETAR(credit_in_millions)
+    Linear = TSLM(credit_in_millions ~ trend())
   )
 
 predictions <- credit_best2 %>%
