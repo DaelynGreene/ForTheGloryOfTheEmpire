@@ -34,10 +34,10 @@ gg_season(CREDIT_TS)
 
 
 train <- CREDIT_TS %>% 
-  filter(Month <= yearmonth("2010 Jan"))
+  filter(Month <= yearmonth("2005 Jan"))
 
 holdout <- CREDIT_TS %>% 
-  filter(Month > yearmonth("2010 Jan"))
+  filter(Month > yearmonth("2005 Jan"))
 
 cluster <- makeCluster(detectCores() - 1) #Line 1 for parallelization
 registerDoParallel(cluster)
@@ -45,20 +45,21 @@ registerDoParallel(cluster)
 Model <- train %>% 
   stretch_tsibble(.init = 48, .step = 24) %>% 
   model(
-    #Naive = NAIVE(credit_in_millions),
-    #S_NAIVE = SNAIVE(credit_in_millions),
-    #Drift = RW(credit_in_millions ~ drift()),
+    Naive = NAIVE(credit_in_millions),
+    S_NAIVE = SNAIVE(credit_in_millions),
+    Drift = RW(credit_in_millions ~ drift()),
     Linear = TSLM(credit_in_millions ~ trend()),
-    #arima012011 = ARIMA(credit_in_millions ~ pdq(0,1,2) + PDQ(0,1,1)),
-    #arima210011 = ARIMA(credit_in_millions ~ pdq(2,1,0) + PDQ(0,1,1)),
+    arima000011 = ARIMA(credit_in_millions ~ pdq(0,0,0) + PDQ(0,1,1)),
+    #arima210011 = ARIMA(credit_in_millions ~ pdq(0,0,0) + PDQ(0,1,3)),
+    #arima210011 = ARIMA(credit_in_millions ~ pdq(0,0,0) + PDQ(0,1,0)),
     stepwise = ARIMA(credit_in_millions),
-    ETS = ETS(credit_in_millions),
-    #search = ARIMA(credit_in_millions, stepwise=FALSE),
-    #arima210 = ARIMA(credit_in_millions ~ pdq(2,1,0)),
-    #arima013 = ARIMA(credit_in_millions ~ pdq(0,1,3)),
+    #ETS = ETS(credit_in_millions),
+    search = ARIMA(credit_in_millions, stepwise=FALSE),
+    #arima210 = ARIMA(credit_in_millions ~ pdq(2,1,1)),
+    arima013 = ARIMA(credit_in_millions ~ pdq(0,1,3)),
     #arima301012 = ARIMA(credit_in_millions ~ pdq(3,0,1) + PDQ(0,1,2)),
     #arima301111 = ARIMA(credit_in_millions ~ pdq(3,0,1) + PDQ(1,1,1)),
-    arima301110 = ARIMA(credit_in_millions ~ pdq(3,0,1) + PDQ(1,1,0)),
+    #arima301110 = ARIMA(credit_in_millions ~ pdq(3,0,1) + PDQ(1,1,0)),
     #auto = ARIMA(credit_in_millions, stepwise = FALSE, approx = FALSE)
     #Neural = NNETAR(credit_in_millions)
     #`K = 1` = ARIMA((credit_in_millions) ~ fourier(K=1) + PDQ(0,0,0)),
@@ -75,12 +76,12 @@ stopCluster(cluster) #Line 3 for parallelization
 registerDoSEQ()
 
 Model %>% #accuracy against the training data
-  forecast(h = 12) %>% 
+  forecast(h = 72) %>% 
   accuracy(train) %>% 
   arrange(RMSE)
 
 Model %>% #accuracy against the holdout data
-  forecast(h = 12) %>% 
+  forecast(h = 72) %>% 
   accuracy(holdout) %>% 
   arrange(RMSE)
 
@@ -90,10 +91,11 @@ credit_best <- train %>%
     #ETS = ETS(credit_in_millions)
     #search = ARIMA(credit_in_millions, stepwise=FALSE)
     #neural = NNETAR(credit_in_millions)
-    Linear = TSLM(credit_in_millions ~ trend())
+    #Linear = TSLM(credit_in_millions ~ trend())
     #auto = ARIMA(credit_in_millions, stepwise = FALSE, approx = FALSE)
     #`K = 4` = ARIMA((credit_in_millions) ~ fourier(K=4) + PDQ(0,0,0))
     #`K = 5` = ARIMA((credit_in_millions) ~ fourier(K=5) + PDQ(0,0,0))
+    arima000011 = ARIMA(credit_in_millions ~ pdq(0,0,0) + PDQ(0,1,1))
   )
 
 credit_best %>% forecast(holdout) %>%
@@ -106,7 +108,7 @@ credit_best %>% gg_tsresiduals()
 
 
 credit_best %>%
-  forecast(h = 12) %>%
+  forecast(h = 72) %>%
   autoplot(holdout) +
   labs(y = "Credits", title = "Imperial Revenue")
 
