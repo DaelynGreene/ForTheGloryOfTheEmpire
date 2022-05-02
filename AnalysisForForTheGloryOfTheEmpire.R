@@ -98,7 +98,7 @@ credit_best <- train %>%
 
 credit_best %>% forecast(holdout) %>%
   autoplot(train) +
-  labs(y = "% of GDP", title = "Credit in Millions Prediction")
+  labs(y = "Credits", title = "Credit in Millions Prediction")
 
 report(credit_best)
 
