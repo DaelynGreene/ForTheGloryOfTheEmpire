@@ -89,7 +89,7 @@ credit_best <- train %>%
   model(
     #stepwise = ARIMA(credit_in_millions)
     #ETS = ETS(credit_in_millions)
-    #search = ARIMA(credit_in_millions, stepwise=FALSE)
+    search = ARIMA(credit_in_millions, stepwise=FALSE),
     #neural = NNETAR(credit_in_millions)
     #Linear = TSLM(credit_in_millions ~ trend())
     #auto = ARIMA(credit_in_millions, stepwise = FALSE, approx = FALSE)
@@ -102,18 +102,28 @@ credit_best %>% forecast(holdout) %>%
   autoplot(train) +
   labs(y = "Credits", title = "Credit in Millions Prediction")
 
-report(credit_best)
+credit_best %>%
+  select("search") %>%
+  report()
 
-credit_best %>% gg_tsresiduals()
+credit_best %>%
+  select("arima000011") %>%
+  report()
 
+credit_best %>% select("search") %>% gg_tsresiduals()
+credit_best %>% select("arima000011") %>% gg_tsresiduals()
 
 credit_best %>%
   forecast(h = 72) %>%
   autoplot(holdout) +
   labs(y = "Credits", title = "Imperial Revenue")
 
-pred <- credit_best %>%
+pred1 <- credit_best %>% select("search") %>%
   forecast(h = 12)
+
+pred2 <- credit_best %>% select("arima000011") %>%
+  forecast(h = 12)
+
 
 rmse <- function(y_actual, y_pred) {
   sqrt(mean((y_actual - y_pred)^2))
@@ -123,16 +133,32 @@ mape <- function(y_actual, y_pred) {
   mean(abs(y_actual - y_pred) / y_actual)
 }
 
-rmse(holdout$credit_in_millions, pred$.mean)
-mape(holdout$credit_in_millions, pred$.mean)
+rmse(holdout$credit_in_millions, pred1$.mean)
+mape(holdout$credit_in_millions, pred1$.mean)
+
+rmse(holdout$credit_in_millions, pred2$.mean)
+mape(holdout$credit_in_millions, pred2$.mean)
 
 credit_best2 <- CREDIT_TS %>%
   model(
     #stepwise = ARIMA(credit_in_millions)
     #ETS = ETS(credit_in_millions)
     #neural = NNETAR(credit_in_millions)
-    Linear = TSLM(credit_in_millions ~ trend())
+    #Linear = TSLM(credit_in_millions ~ trend()),
+    search = ARIMA(credit_in_millions, stepwise=FALSE),
+    #arima000011 = ARIMA(credit_in_millions ~ pdq(0,0,0) + PDQ(0,1,1))
   )
+
+credit_best2 %>%
+  forecast(h = 12) %>%
+  autoplot(CREDIT_TS) +
+  labs(y = "Credits", title = "Imperial Revenue")
+
+credit_best2 %>%
+  forecast(h = 12) %>%
+  autoplot(CREDIT_TS) +
+  labs(y = "Credits", title = "Imperial Revenue")
+
 
 predictions <- credit_best2 %>%
   forecast(h = 12)
