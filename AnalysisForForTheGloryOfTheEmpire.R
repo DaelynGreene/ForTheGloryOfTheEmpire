@@ -145,14 +145,9 @@ credit_best2 <- CREDIT_TS %>%
     #ETS = ETS(credit_in_millions)
     #neural = NNETAR(credit_in_millions)
     #Linear = TSLM(credit_in_millions ~ trend()),
-    search = ARIMA(credit_in_millions, stepwise=FALSE),
-    #arima000011 = ARIMA(credit_in_millions ~ pdq(0,0,0) + PDQ(0,1,1))
+    #search = ARIMA(credit_in_millions, stepwise=FALSE),
+    arima000011 = ARIMA(credit_in_millions ~ pdq(0,0,0) + PDQ(0,1,1))
   )
-
-credit_best2 %>%
-  forecast(h = 12) %>%
-  autoplot(CREDIT_TS) +
-  labs(y = "Credits", title = "Imperial Revenue")
 
 credit_best2 %>%
   forecast(h = 12) %>%
